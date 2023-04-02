@@ -2,39 +2,24 @@
 
 [![Build Status](https://travis-ci.org/twitter/GraphJet.svg?branch=master)](https://travis-ci.org/twitter/GraphJet)
 
-GraphJet is a real-time graph processing library written in Java that
-maintains a full graph index over a sliding time window in memory on a
-single server. This index supports a variety of graph algorithms
-including personalized recommendation algorithms based on
-collaborative filtering. These algorithms power a variety of real-time
-recommendation services within Twitter, notably content (tweets/URLs)
-recommendations that require collaborative filtering over a
-heterogeneous, rapidly evolving graph.
+GraphJet, tek bir sunucuda bellekte bir kaydırma zaman penceresi üzerinde tam bir graf dizini tutan Java'da yazılmış gerçek zamanlı bir graf işleme kütüphanesidir. Bu dizin, işbirlikçi filtreleme temelli kişiselleştirilmiş öneri algoritmaları da dahil olmak üzere çeşitli graf algoritmalarını destekler. Bu algoritmalar, özellikle Twitter'da içerik (tweet/URL) önerileri için gereken hızlı değişen bir graf üzerinde işbirlikçi filtreleme yapmaktadır.
 
-GraphJet is able to support rapid ingestion of edges in an evolving
-graph while concurrently serving lookup queries through a combination
-of compact edge encoding and a dynamic memory allocation scheme. Each
-GraphJet server can ingest up to one million graph edges per second,
-and in steady state, computes up to 500 recommendations per second,
-which translates into several million edge read operations per
-second. More information about the internals of GraphJet can be found
-in the
-[VLDB'16 paper](http://www.vldb.org/pvldb/vol9/p1281-sharma.pdf).
+GraphJet, dinamik bir graf üzerindeki hızlı kenar veri girişini desteklerken, kompakt kenar kodlaması ve dinamik bellek tahsisi düzenlemesi kombinasyonuyla sorgu sırasında hizmet sunabilme yeteneğine sahiptir. Her GraphJet sunucusu saniyede bir milyon graf kenarını işleyebilir ve kararlı durumda saniyede 500 öneri hesaplar, bu da saniyede birkaç milyon kenar okuma işlemine denk gelir. GraphJet'in iç yapıları hakkında daha fazla bilgiye http://www.vldb.org/pvldb/vol9/p1281-sharma.pdf makalesinde ulaşılabilir.
 
-# Quick Start and Example
+# Başlangıç ve Örnek
 
-After cloning the repo, build as follows (for the impatient, use option `-DskipTests` to skip tests):
+Depoyu klonladıktan sonra, aşağıdaki şekilde derleyin.(Testleri atlamak için ' -DskipTest' seçeneğini kullanın):
 
 ```
 $ mvn package install
 ```
 
-GraphJet includes a demo that reads from the Twitter public sample stream using the [Twitter4j library](http://twitter4j.org/en/) and maintains two separate in-memory bipartite graphs:
+GraphJet, [Twitter4j library](http://twitter4j.org/en/) kütüphanesi kullanarak Twitter halka açık örnek akışından okuma yapan ve iki ayrı bellek içi ikili graf tutan bir demo içerir:
 
-+ A bipartite graph of user-tweet interactions. The left-hand side vertices represent users, the right-hand side vertices represent tweets, and the edges represent tweet posts and retweets.
-+ A bipartite graph of tweet-hashtag contents. The left-hand side vertices represent tweets, the right-hand side vertices represent hashtags, and the edges represent content association (e.g., a tweet contains a hashtag).
++ Kullanıcı-tweet etkileşimlerinin ikili grafiği. Sol taraftaki düğümler kullanıcıları, sağ taraftaki düğümler tweetleri temsil eder ve kenarlar tweet gönderilerini ve yeniden tweetleri temsil eder.
++ Tweet-hashtag içeriklerinin ikili grafiği. Sol taraftaki düğümler tweetleri, sağ taraftaki düğümler hashtag'leri temsil eder ve kenarlar içerik ilişkisini (örneğin, bir tweet bir hashtag içerir) temsil eder.
 
-To run the demo, create a file called `twitter4j.properties` in the GraphJet base directory with your Twitter credentials (replace `xxxx` with actual credentials):
+Demo'yu çalıştırmak için, GraphJet ana dizininde twitter4j.properties adlı bir dosya oluşturun ve Twitter kimlik bilgilerinizi girin (xxxx'yi gerçek kimlik bilgileriyle değiştirin):
 
 ```
 oauth.consumerKey=xxxx
@@ -42,80 +27,72 @@ oauth.consumerSecret=xxxx
 oauth.accessToken=xxxx
 oauth.accessTokenSecret=xxxx
 ```
-
-For obtaining the credentials, see [documentation on obtaining Twitter OAuth tokens](https://dev.twitter.com/oauth/overview/application-owner-access-tokens). The public sample stream is available to registered users, see [documentation about Twitter streaming APIs](https://dev.twitter.com/streaming/overview) for more details.
-
-Once you've built GraphJet, start the demo as follows:
+Kimlik bilgilerini almak için, -Twitter OAuth belgelerindeki- (https://dev.twitter.com/oauth/overview/application-owner-access-tokens) talimatları izleyin. Halka açık örnek akışı kayıtlı kullanıcılara açıktır; daha fazla bilgi için -Twitter akış API'leri hakkındaki belgeleri- (https://dev.twitter.com/streaming/overview) inceleyin.
+GraphJet'i oluşturduktan sonra, demo'yu aşağıdaki gibi başlatın:
 
 ```
 $ mvn exec:java -pl graphjet-demo -Dexec.mainClass=com.twitter.graphjet.demo.TwitterStreamReader
 ```
 
-Once the demo starts up, it begins ingesting the Twitter public sample stream. The program will print out a sequence of status messages indicating the internal state of the user-tweet graph and the tweet-hashtag graph.
+Demo başlatıldıktan sonra, Twitter genel örnek akışını içe aktarmaya başlar. Program, kullanıcı-tweet grafiğinin ve tweet-hashtag grafiğinin dahili durumunu gösteren bir dizi durum mesajı yazdırır.
 
-You can interact with the graph via a REST API, running on port 8888 by default; use ` -Dexec.args="-port xxxx"` to specify a different port.
+Varsayılan olarak 8888 numaralı bağlantı noktasında çalışan bir REST API'si aracılığıyla grafikle etkileşime geçebilirsiniz; farklı bir bağlantı noktası belirtmek için -Dexec.args="-port xxxx" kullanın.
 
-The following calls are available to query the state of the in-memory bipartite graph of user-tweet interactions:
+Kullanıcı-tweet etkileşiminin bellek içi bipartit grafiğinin durumunu sorgulamak için aşağıdaki çağrılar kullanılabilir:
 
-+ `userTweetGraph/topTweets`: queries for the top tweets in terms of interactions (retweets). Use parameter `k` to specify number of results to return (default ten). Sample invocation:
++ `userTweetGraph/topTweets`: Etkileşimler (retweet'ler) açısından en popüler tweet'leri sorgulamak için k parametresini kullanarak dönecek sonuç sayısını belirtin (varsayılan olarak on sonuç). Örnek:
 
 ```
 curl http://localhost:8888/userTweetGraph/topTweets?k=5
 ```
 
-+ `userTweetGraph/topUsers`: queries for the top users in terms of interactions (retweets).  Use parameter `k` to specify number of results to return (default ten). Sample invocation:
++ `userTweetGraph/topUsers`: Etkileşimler (retweet'ler) açısından en popüler kullanıcıları sorgulamak için k parametresini kullanarak dönecek sonuç sayısını belirtin (varsayılan olarak on sonuç). Örnek:
 
 ```
 curl http://localhost:8888/userTweetGraph/topUsers?k=5
 ```
 
-+ `userTweetGraphEdges/tweets`: queries for the edges incident to a particular tweet in the user-tweet graph, i.e., users who have interacted with the tweet. Use parameter `id` to specify tweetId (e.g., from `userTweetGraph/topTweets` above). Sample invocation:
++ `userTweetGraphEdges/tweets`: Kullanıcı-tweet grafiğinde belirli bir tweet'e bağlı kenarları sorgulamak için, yani tweet ile etkileşimde bulunan kullanıcıları sorgulamak için id parametresini kullanın (yukarıdaki userTweetGraph/topTweets örneğinden tweetId örneği). Örnek:
 
 ```
 curl http://localhost:8888/userTweetGraphEdges/tweets?id=xxx
 ```
 
-+ `userTweetGraphEdges/users`: queries for the edges incident to a particular user in the user-tweet graph, i.e., tweets the user interacted with. Use parameter `id` to specify userId (e.g., from `userTweetGraph/topUsers` above). Sample invocation:
++ `userTweetGraphEdges/users`: Kullanıcı-tweet grafiğinde belirli bir kullanıcıya bağlı kenarları sorgulamak için, yani kullanıcının etkileşimde bulunduğu tweet'leri sorgulamak için id parametresini kullanın (yukarıdaki userTweetGraph/topUsers örneğinden userId örneği). Örnek:
 
 ```
 curl http://localhost:8888/userTweetGraphEdges/users?id=xxx
 ```
 
-The following calls are available to query the state of the in-memory bipartite graph of tweet-hashtag contents:
+Aşağıdaki çağrılar tweet-hashtag içeriklerinin hafızada tutulan çift bölümlü grafiğinin durumunu sorgulamak için kullanılabilir:
 
-+ `tweetHashtagGraph/topTweets`: queries for the top tweets in terms of hashtags. Use parameter `k` to specify number of results to return (default ten). Sample invocation:
++ `tweetHashtagGraph/topTweets`: Hashtaglar açısından en çok etkileşim alan tweetler için sorgular. Sonuç olarak döndürülecek sonuç sayısını belirtmek için k parametresini kullanın (varsayılan ondur). Örnek:
 
 ```
 curl http://localhost:8888/tweetHashtagGraph/topTweets?k=5
 ```
 
-+ `tweetHashtagGraph/topHashtags`: queries for the top hashtags in terms of tweets.  Use parameter `k` to specify number of results to return (default ten). Sample invocation:
++ `tweetHashtagGraph/topHashtags`: En çok tweet içeren hashtag'ler için sorgular. Döndürülecek sonuç sayısını belirtmek için k parametresini kullanın (varsayılan on). Örnek:
 
 ```
 curl http://localhost:8888/tweetHashtagGraph/topHashtags?k=5
 ```
 
-+ `tweetHashtagGraphEdges/tweets`: queries for the edges incident to a particular tweet in the tweet-hashtag graph, i.e., hashtags contained in the tweet. Use parameter `id` to specify tweetId (e.g., from `tweetHashtagGraph/topTweets` above). Sample invocation:
++ `tweetHashtagGraphEdges/tweets`: Belirli bir tweet'in tweet-hashtag grafiğindeki, yani tweet'te bulunan hashtag'lerle ilişkili olan kenarları sorgulamak için aşağıdaki çağrılar kullanılabilir. id parametresini belirli tweetId'sini belirtmek için kullanın (yukarıdaki tweetHashtagGraph/topTweets örneğinden). Örnek:
 
 ```
 curl http://localhost:8888/tweetHashtagGraphEdges/tweets?id=xxx
 ```
 
-+ `tweetHashtagGraphEdges/hashtags`: queries for the edges incident to a particular hashtag in the tweet-hashtag graph, i.e., tweets the given hashtag is contained in. Use parameter `id` to specify hashtagId (e.g., from `tweetHashtagGraph/topHashtags` above). Sample invocation:
++ `tweetHashtagGraphEdges/hashtags`: Belirli bir hashtag'in tweet-hashtag grafiğindeki kenarlara (yani belirli hashtag'i içeren tweetlere) sorgular. Parametre olarak id kullanarak hashtagId'yi belirtin (yukarıdaki tweetHashtagGraph/topHashtags örneğinden). Örnek:
 
 ```
 curl http://localhost:8888/tweetHashtagGraphEdges/hashtags?id=xxx
 ```
 
-The demo program illustrates collaborative filtering via similarity
-queries on the tweet-hashtag graph. Note that the demo does not offer
-personalized recommendation algorithms on the user-tweet graph (as is
-deployed inside Twitter) because the public sample stream API is too
-sparse in terms of interactions to give good results. The following
-endpoint for similarity queries offers related hashtags given an input
-hashtag:
+Demo program, tweet-hashtag grafiği üzerinde benzerlik sorguları aracılığıyla işbirlikçi filtrelemeyi gösterir. Demo, Twitter'da kullanılan kişiselleştirilmiş öneri algoritmalarını sunmaz çünkü genel örnek akış API'si etkileşimler açısından çok seyrek olduğu için iyi sonuçlar vermez. Benzerlik sorguları için aşağıdaki uç nokta, bir girdi hashtag'ine göre ilgili hashtag'leri sağlar:
 
-+ `similarHashtags`: computes similar hashtag to the input hashtag based on real time data. Use parameter `hashtag` to specify hashtag (e.g., from `tweetHashtagGraph/topHashtags` above). Sample invocation:
++ `similarHashtags`: Gerçek zamanlı verilere dayanarak girdi hashtag'ine benzer hashtag'leri hesaplar. Hashtag belirtmek için parametre olarak hashtag kullanın (ör. yukarıdaki tweetHashtagGraph/topHashtags'den). Örnek:
 
 ```
 curl http://localhost:8888/similarHashtags?hashtag=trump&k=10
